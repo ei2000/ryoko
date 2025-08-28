@@ -1,4 +1,47 @@
 import 'package:flutter/material.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+// --- アプリ全体で使うデータ部分 ---
+
+// TravelSpotクラスの定義（前回、ファイル末尾に追加したもの）
+class TravelSpot {
+  final String name;
+  final String imageUrl;
+  final double latitude;
+  final double longitude;
+
+  const TravelSpot({
+    required this.name,
+    required this.imageUrl,
+    required this.latitude,
+    required this.longitude,
+  });
+}
+
+// 表示したい観光スポットのデータリストを作成
+// 色々な場所を追加して試してみましょう
+const List<TravelSpot> travelSpots = [
+  TravelSpot(
+    name: '金閣寺（鹿苑寺）',
+    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/8/84/Kinkaku-ji_in_Kyoto_02.jpg',
+    latitude: 35.03939,
+    longitude: 135.72924,
+  ),
+  TravelSpot(
+    name: '清水寺',
+    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/41/Kiyomizu-dera_in_Kyoto_Japan_April_2007.jpg/1280px-Kiyomizu-dera_in_Kyoto_Japan_April_2007.jpg',
+    latitude: 34.99485,
+    longitude: 135.78505,
+  ),
+  TravelSpot(
+    name: '東京タワー',
+    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/37/Tokyo_Tower_2012_Oct.JPG/1024px-Tokyo_Tower_2012_Oct.JPG',
+    latitude: 35.65858,
+    longitude: 139.74543,
+  ),
+];
+
+
+// --- アプリの実行部分 ---
 
 void main() {
   runApp(const MyApp());
@@ -7,116 +50,101 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: '旅行アプリ',
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        primarySwatch: Colors.blue,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      // 最初に表示する画面を SpotListScreen に設定
+      home: const SpotListScreen(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
 
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
+// --- 画面その１：観光スポットの一覧画面 ---
 
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
-  }
+class SpotListScreen extends StatelessWidget {
+  const SpotListScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
       appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
+        title: const Text('観光スポット一覧'),
       ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
+      // travelSpots リストの数だけ一覧表示を作る
+      body: ListView.builder(
+        itemCount: travelSpots.length,
+        itemBuilder: (context, index) {
+          final spot = travelSpots[index];
+          return ListTile(
+            title: Text(spot.name),
+            // タップされた時の処理
+            onTap: () {
+              // 詳細画面（SpotDetailScreen）に移動する
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => SpotDetailScreen(spot: spot),
+                ),
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
+}
+
+// --- 画面その２：観光スポットの詳細画面（写真・地図） ---
+
+class SpotDetailScreen extends StatelessWidget {
+  // 表示するべきスポットのデータを前の画面から受け取る
+  final TravelSpot spot;
+
+  const SpotDetailScreen({super.key, required this.spot});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        // 受け取ったデータから名前を表示
+        title: Text(spot.name),
+      ),
+      body: Column(
+        children: [
+          // 1. 写真の表示
+          SizedBox(
+            height: 300,
+            width: double.infinity,
+            child: Image.network(
+              spot.imageUrl, // 受け取ったデータの画像URL
+              fit: BoxFit.cover,
             ),
-          ],
-        ),
+          ),
+
+          // 2. 地図の表示
+          Expanded(
+            child: GoogleMap(
+              initialCameraPosition: CameraPosition(
+                // 受け取ったデータの緯度経度
+                target: LatLng(spot.latitude, spot.longitude),
+                zoom: 15,
+              ),
+              markers: {
+                Marker(
+                  markerId: MarkerId(spot.name),
+                  // 受け取ったデータの緯度経度
+                  position: LatLng(spot.latitude, spot.longitude),
+                ),
+              },
+            ),
+          ),
+        ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 }
