@@ -89,10 +89,3 @@ flutter:
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
 
-dependencies:
-  flutter:
-    sdk: flutter
-
-  cupertino_icons: ^1.0.2
-  image_picker: ^1.1.2
-  http: ^1.2.1
