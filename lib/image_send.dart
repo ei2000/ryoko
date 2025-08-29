@@ -23,7 +23,11 @@ class ImageUploadScreen extends StatefulWidget {
 class _ImageUploadScreenState extends State<ImageUploadScreen> {
   File? _image;
   final ImagePicker _picker = ImagePicker();
-  final String _uploadUrl = 'YOUR_SERVER_UPLOAD_URL'; // ここにサーバーのアップロードURLを設定
+  // ★★★ サーバーから返された画像のURLを保存するための変数を追加
+  String? _uploadedImageUrl;
+
+  // ★★★ IPアドレスやドメインなど、ご自身の環境に合わせてください
+  final String _uploadUrl = 'http://192.168.1.10:3000/upload';
 
   // ギャラリーから画像を選択
   Future<void> _pickImage() async {
@@ -31,6 +35,7 @@ class _ImageUploadScreenState extends State<ImageUploadScreen> {
     setState(() {
       if (pickedFile != null) {
         _image = File(pickedFile.path);
+        _uploadedImageUrl = null; // ★★★ 新しい画像を選んだら、サーバー画像のURLはリセット
       } else {
         print('No image selected.');
       }
@@ -46,11 +51,10 @@ class _ImageUploadScreenState extends State<ImageUploadScreen> {
       return;
     }
 
-    // マルチパートリクエストを作成
     var request = http.MultipartRequest('POST', Uri.parse(_uploadUrl));
     request.files.add(
       await http.MultipartFile.fromPath(
-        'image', // サーバー側で受け取るフィールド名
+        'image',
         _image!.path,
         filename: _image!.path.split('/').last,
       ),
@@ -60,10 +64,18 @@ class _ImageUploadScreenState extends State<ImageUploadScreen> {
       var response = await request.send();
 
       if (response.statusCode == 200) {
+        // ★★★ レスポンスから返されたURL文字列を取得
+        final imageUrl = await response.stream.bytesToString();
+
+        // ★★★ 取得したURLをstateに保存して画面を更新
+        setState(() {
+          _uploadedImageUrl = imageUrl;
+        });
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('画像のアップロードに成功しました！')),
         );
-        print('Image uploaded successfully!');
+        print('Image uploaded successfully! URL: $imageUrl');
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('画像のアップロードに失敗しました。Status: ${response.statusCode}')),
@@ -88,9 +100,16 @@ class _ImageUploadScreenState extends State<ImageUploadScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            _image == null
-                ? Text('画像が選択されていません。')
-                : Image.file(_image!, height: 200),
+            // ★★★ 表示ロジックの変更
+            if (_uploadedImageUrl != null)
+            // サーバーからURLが返ってきたら、そのURLの画像を表示
+              Image.network(_uploadedImageUrl!, height: 200)
+            else if (_image != null)
+            // まだアップロードしてないが、画像を選択済みの場合はローカルファイルを表示
+              Image.file(_image!, height: 200)
+            else
+            // 何も選択されていない場合
+              Text('画像が選択されていません。'),
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: _pickImage,
